@@ -47,8 +47,8 @@ public class Controller {
       while((line = bufferedReader.readLine()) != null) {
 
         String[] splits = line.split("\\s+");
-        System.out.println(splits[0]);
-        System.out.println(splits[1]);
+//        System.out.println(splits[0]);
+//        System.out.println(splits[1]);
         int key = Integer.parseInt(splits[0]);
         int value = Integer.parseInt(splits[1]);
         if (!nodeIDs.contains(key))
