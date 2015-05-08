@@ -30,10 +30,11 @@ public class Node {
   static ArrayList<ArrayList<Integer>> childrenRootedAtTree;
 
   public static void writeMulticastToFile(String multicastMessage) {
+    String printToFile = multicastMessage.substring(9);
     try {
       fileWriter = new FileWriter(recv_fileName, true);
       bufferedWriter = new BufferedWriter(fileWriter);
-      bufferedWriter.write(multicastMessage);
+      bufferedWriter.write(printToFile);
       bufferedWriter.newLine();
       bufferedWriter.close();
     } catch (Exception e) {
@@ -104,7 +105,6 @@ public class Node {
     int timestamp = Integer.parseInt(nbr[1]);
     int sender = Integer.parseInt(nbr[0]);
     if (timestamp > lastLSAReceivedTS.get(sender)) {
-     // System.out.println("adding new timestamp at location " + sender);
       lastLSAReceivedTS.set(sender, timestamp);
       return true;
     }
@@ -226,9 +226,9 @@ public class Node {
           if (parentsRootedAtTree[Integer.parseInt(info[1])] == Integer.parseInt(info[0])) {
             System.out.println(nodeID + " received multicast from parent " + info[0]);
             if (childrenRootedAtTree.get(Integer.parseInt(info[1])).size() > 0) {
-              sourceMulticast(Integer.parseInt(info[1]), info[2]);
+              sourceMulticast(Integer.parseInt(info[1]), line.substring(9));
             } else {
-              writeMulticastToFile(info[2]);
+              writeMulticastToFile(line);
             }
           }
         }
@@ -333,9 +333,10 @@ public class Node {
         sourceID = Integer.parseInt(args[3]);
       } else if (args[2].equals("sender")) {
         source = true;
-        multicast = args[4];
+        multicast = args[3];
       }
     }
+    System.out.println(multicast);
 
     init();
 
