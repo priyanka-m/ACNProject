@@ -1,5 +1,9 @@
 
 import java.util.*;
+
+/**
+ * This class helps to find shortest distance between source and receiver
+ */
 class Dijkstra {
 
   public static boolean inLast(int val,String last[]){
@@ -11,6 +15,15 @@ class Dijkstra {
     }
     return false;
   }
+
+  /**
+   *
+   * @param start starting point
+   * @param end ending point
+   * @param matrix adjacency matrix
+   * @return path
+   * This function calculates the shortest path between start and end
+   */
   public static String calDistance(int start,int end,int matrix[][])
   {
     int i=0;

@@ -3,24 +3,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Created by priyanka on 4/21/15.
- *
- */
-
-/**
+ * @author Priyanka Menghani
+ * This is the controller, that reads all output files of the nodes and
+ * forwards the messages to outgoing neighbours by writing in their input files
  *
  */
 public class Controller {
-  // Number of nodes in the system
-  static int numNodes;
+  static int numNodes; // Number of nodes in the system
   static FileReader fileReader;
   static BufferedReader bufferedReader;
   static FileWriter fileWriter;
   static BufferedWriter bufferedWriter;
-  // Map to store topology of the network
-  static HashMap<Integer, ArrayList<Integer>> topology = new HashMap<Integer, ArrayList<Integer>>();
-  static ArrayList<Integer> nodeIDs = new ArrayList<Integer>();
+  static HashMap<Integer, ArrayList<Integer>> topology = new HashMap<Integer, ArrayList<Integer>>();   // Map to store topology of the network
+  static ArrayList<Integer> nodeIDs = new ArrayList<Integer>(); // Id of the nodes in the network
+  static int endReceived = 0; // Number of nodes that have ended the algorithm
 
+  /**
+   *
+   * @param key node
+   * @param value outgoing neighbour
+   * This function fill the topology map
+   */
   static void fillTopologyMap(int key, int value) {
     ArrayList<Integer> outgoing;
     if (topology.containsKey(key)) {
@@ -33,10 +36,11 @@ public class Controller {
     topology.put(key, outgoing);
   }
 
-  static void createNodeFile() {
-
-  }
-
+  /**
+   *
+   * @param url url of the topology file
+   * This function reads the topology file
+   */
   static void readTopologyFile(String url) {
     System.out.println("reading topology file");
     try {
@@ -47,8 +51,7 @@ public class Controller {
       while((line = bufferedReader.readLine()) != null) {
 
         String[] splits = line.split("\\s+");
-//        System.out.println(splits[0]);
-//        System.out.println(splits[1]);
+
         int key = Integer.parseInt(splits[0]);
         int value = Integer.parseInt(splits[1]);
         if (!nodeIDs.contains(key))
@@ -56,25 +59,39 @@ public class Controller {
         if (!nodeIDs.contains(value))
           nodeIDs.add(value);
         fillTopologyMap(key, value);
-        createNodeFile();
       }
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
+  /**
+   *
+   * @param message message
+   * @param nodeId node id
+   * This function writes to input files
+   */
   static void writeFile(String message, int nodeId) {
     try {
       fileWriter = new FileWriter("input_" + nodeId + ".txt", true);
       bufferedWriter = new BufferedWriter(fileWriter);
       bufferedWriter.write(message);
       bufferedWriter.newLine();
+      bufferedWriter.flush();
       bufferedWriter.close();
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
+  /**
+   *
+   * @param nodeID
+   * @param fileName
+   * @param linesToSkip
+   * @return
+   * This function reads input files and forwards to the sender's outgoing neighbours
+   */
   static int readFile(int nodeID, File fileName, int linesToSkip) {
     String line;
     try {
@@ -88,17 +105,18 @@ public class Controller {
         bufferedReader.readLine();
       }
       while((line = bufferedReader.readLine()) != null) {
-        // The node that sent the message NOT NEEDED
-        //int node = Integer.parseInt(line.split("HELLO |LS// Number of nodes in the systemA ")[1].substring(0, 1));
 
-        ArrayList<Integer> outgoing = topology.get(nodeID);
-        if (outgoing.size() > 0) {
-          for (int eachOutgoing : outgoing) {
-            System.out.println("sending the msg from " + nodeID + " to its neighbour " + eachOutgoing);
-            writeFile(line, eachOutgoing);
+        if (line.matches("END .*")) {
+          endReceived += 1;
+        } else {
+          ArrayList<Integer> outgoing = topology.get(nodeID);
+          if (outgoing.size() > 0) {
+            for (int eachOutgoing : outgoing) {
+              System.out.println("sending the msg from " + nodeID + " to its neighbour " + eachOutgoing);
+              writeFile(line, eachOutgoing);
+            }
           }
         }
-
         linesToSkip++;
       }
       bufferedReader.close();
@@ -126,20 +144,27 @@ public class Controller {
     // The name of the file to open.
     File fileName;
 
-    while (true) {
-      for (int i = 0; i < numNodes; i++) {
-        fileName = new File("output_" + i + ".txt");
-        if (fileName.exists()) {
-          System.out.println("output_" + i + ".txt  exists and reading it");
-          linesToSkip[i] = readFile(i, fileName, linesToSkip[i]);
-        }
-        try {
-          Thread.sleep(1000);
-        } catch (Exception e) {
-          e.printStackTrace();
+    try {
+      while (true) {
+        for (int i = 0; i < numNodes; i++) {
+          fileName = new File("output_" + i + ".txt");
+          if (fileName.exists()) {
+            System.out.println("output_" + i + ".txt  exists and reading it");
+            linesToSkip[i] = readFile(i, fileName, linesToSkip[i]);
+          }
+          if (endReceived >= 3) {
+            throw new Exception();
+          }
+          try {
+            Thread.sleep(1000);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
         }
       }
-
+    } catch (Exception e) {
+      System.out.println("ALGORITHM HAS ENDED");
+      System.out.println("CONTROLLER SHUTTING DOWN");
     }
   }
 }
